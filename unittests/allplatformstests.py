@@ -570,6 +570,13 @@ class AllPlatformTests(BasePlatformTests):
         self.build()
         self._run(self.mtest_command + ['--repeat=2'])
 
+    def test_verbose(self):
+        testdir = os.path.join(self.common_test_dir, '206 tap tests')
+        self.init(testdir)
+        self.build()
+        out = self._run(self.mtest_command + ['--suite', 'verbose'])
+        self.assertIn('1/1 subtest 1', out)
+
     def test_testsetups(self):
         if not shutil.which('valgrind'):
             raise SkipTest('Valgrind not installed.')
@@ -2368,7 +2375,7 @@ class AllPlatformTests(BasePlatformTests):
                 endian = 'little'
                 '''.format(os.path.join(testdir, 'cross_pkgconfig.py'))))
             crossfile.flush()
-            self.meson_cross_file = crossfile.name
+            self.meson_cross_files = [crossfile.name]
 
         env = {'PKG_CONFIG_LIBDIR':  os.path.join(testdir,
                                                   'native_pkgconfig')}
@@ -2396,7 +2403,7 @@ class AllPlatformTests(BasePlatformTests):
                 endian = 'little'
                 '''.format(os.path.join(testdir, 'cross_pkgconfig'))))
             crossfile.flush()
-            self.meson_cross_file = crossfile.name
+            self.meson_cross_files = [crossfile.name]
 
         env = {'PKG_CONFIG_LIBDIR':  os.path.join(testdir,
                                                   'native_pkgconfig')}
@@ -2630,8 +2637,8 @@ class AllPlatformTests(BasePlatformTests):
         testdir = os.path.join(self.unit_test_dir, '70 cross')
         # Do a build to generate a cross file where the host is this target
         self.init(testdir, extra_args=['-Dgenerate=true'])
-        self.meson_cross_file = os.path.join(self.builddir, "crossfile")
-        self.assertTrue(os.path.exists(self.meson_cross_file))
+        self.meson_cross_files = [os.path.join(self.builddir, "crossfile")]
+        self.assertTrue(os.path.exists(self.meson_cross_files[0]))
         # Now verify that this is detected as cross
         self.new_builddir()
         self.init(testdir)
@@ -3595,14 +3602,14 @@ class AllPlatformTests(BasePlatformTests):
                 '''))
 
         # Test native C stdlib
-        self.meson_native_file = machinefile
+        self.meson_native_files = [machinefile]
         self.init(testdir)
         self.build()
 
         # Test cross C stdlib
         self.new_builddir()
-        self.meson_native_file = None
-        self.meson_cross_file = machinefile
+        self.meson_native_files = []
+        self.meson_cross_files = [machinefile]
         self.init(testdir)
         self.build()
 
@@ -3662,6 +3669,8 @@ class AllPlatformTests(BasePlatformTests):
         # This checks a bug where if a non-meson project is used as a third
         # level (or deeper) subproject it doesn't cause a rebuild if the build
         # files for that project are changed
+        if os.environ.get('MESON_CI_JOBNAME') == 'linux-bionic-gcc':
+            raise SkipTest('Unsupported CMake version')
         testdir = os.path.join(self.unit_test_dir, '85 nested subproject regenerate depends')
         cmakefile = Path(testdir) / 'subprojects' / 'sub2' / 'CMakeLists.txt'
         self.init(testdir)
