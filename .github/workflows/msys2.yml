@@ -19,10 +19,11 @@ on:
       - "unittests/**"
       - ".github/workflows/msys2.yml"
       - "run_unittests.py"
+  workflow_dispatch:
 
 jobs:
   test:
-    runs-on: windows-2019
+    runs-on: self-hosted
     name: ${{ matrix.NAME }}
     strategy:
       fail-fast: false
