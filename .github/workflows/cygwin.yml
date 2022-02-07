@@ -17,10 +17,11 @@ on:
       - "test cases/**"
       - ".github/workflows/cygwin.yml"
       - "run*tests.py"
+  workflow_dispatch:
 
 jobs:
   test:
-    runs-on: windows-latest
+    runs-on: self-hosted
     name: ${{ matrix.NAME }}
     strategy:
       fail-fast: false
